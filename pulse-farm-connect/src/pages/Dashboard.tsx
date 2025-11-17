@@ -30,14 +30,33 @@ const Dashboard = () => {
   };
 
   const getMoistureStatus = () => {
-    if (moisture > 60) return { text: "Optimal - No irrigation needed", color: "text-secondary" };
-    if (moisture < 30) return { text: "Critical - Irrigation required", color: "text-destructive" };
-    return { text: "Normal - Monitor closely", color: "text-accent" };
+    if (moisture > 60)
+      return {
+        text: "Optimal - No irrigation needed",
+        color: "text-secondary",
+        bg: "bg-green-100",
+        border: "border-green-300",
+      };
+
+    if (moisture < 30)
+      return {
+        text: "Critical - Irrigation required",
+        color: "text-destructive",
+        bg: "bg-red-100",
+        border: "border-red-300",
+      };
+
+    return {
+      text: "Normal - Monitor closely",
+      color: "text-yellow-600",
+      bg: "bg-yellow-100",
+      border: "border-yellow-300",
+    };
   };
 
   return (
     <div className="min-h-screen bg-gradient-earth p-6 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-7xl space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -47,7 +66,7 @@ const Dashboard = () => {
             <p className="text-muted-foreground mt-1">Sustainable Agriculture Management</p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="flex items-center gap-2">
               <Sprout className="h-4 w-4" />
               Crop Advisor
             </Button>
@@ -61,20 +80,23 @@ const Dashboard = () => {
         {/* Sensor Data Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Moisture Card */}
-          <Card className="p-6 shadow-soft hover:shadow-strong transition-shadow bg-white">
+          <Card className={`p-6 shadow-soft hover:shadow-strong transition-shadow border ${getMoistureStatus().bg} ${getMoistureStatus().border}`}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 text-muted-foreground mb-2">
                   <Droplets className="h-5 w-5" />
                   <span className="text-sm font-medium">Soil Moisture</span>
                 </div>
+
                 <div className="text-4xl font-bold text-primary mb-2">
                   {moisture.toFixed(1)}%
                 </div>
+
                 <p className={`text-sm font-medium ${getMoistureStatus().color}`}>
                   {getMoistureStatus().text}
                 </p>
               </div>
+
               <div className="h-16 w-16 rounded-full bg-secondary/20 flex items-center justify-center">
                 <Droplets className="h-8 w-8 text-secondary" />
               </div>
@@ -98,57 +120,6 @@ const Dashboard = () => {
               </div>
               <div className="h-16 w-16 rounded-full bg-secondary/20 flex items-center justify-center">
                 <Wind className="h-8 w-8 text-secondary" />
-              </div>
-            </div>
-          </Card>
-
-          {/* Pump Control Card */}
-          <Card className="p-6 shadow-soft hover:shadow-strong transition-shadow bg-gradient-primary">
-            <div className="flex flex-col h-full justify-between text-primary-foreground">
-              <div className="flex items-center gap-2 mb-2">
-                <Power className="h-5 w-5" />
-                <span className="text-sm font-medium">Water Pump</span>
-              </div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`h-3 w-3 rounded-full ${pumpStatus ? 'bg-secondary animate-pulse' : 'bg-muted'}`} />
-                <span className="text-2xl font-bold">
-                  {pumpStatus ? "ACTIVE" : "INACTIVE"}
-                </span>
-              </div>
-              <Button 
-                onClick={togglePump}
-                variant="secondary"
-                className="w-full"
-              >
-                {pumpStatus ? "Turn OFF" : "Turn ON"}
-              </Button>
-            </div>
-          </Card>
-
-          <Card className="p-6 shadow-soft hover:shadow-strong transition-shadow bg-white">
-            <div className="flex items-start justify-between">
-              <div className="my-4">
-                <p className="text-xs text-center text-primary-foreground/80 mb-2">System Health</p>
-                <div className="flex justify-center gap-4">
-                  <div 
-                    className={`h-10 w-10 rounded-md border-2 border-white/50 shadow-md transition-colors ${
-                      getMoistureStatus().color === 'text-destructive' ? 'bg-red-500' : 'bg-white/30'
-                    }`} 
-                    title="Critical">
-                  </div>
-                  <div 
-                    className={`h-10 w-10 rounded-md border-2 border-white/50 shadow-md transition-colors ${
-                      getMoistureStatus().color === 'text-accent' ? 'bg-yellow-400' : 'bg-white/30'
-                    }`} 
-                    title="Warning">
-                  </div>
-                  <div 
-                    className={`h-10 w-10 rounded-md border-2 border-white/50 shadow-md transition-colors ${
-                      getMoistureStatus().color === 'text-secondary' ? 'bg-green-500' : 'bg-white/30'
-                    }`} 
-                    title="Optimal">
-                  </div>
-                </div>
               </div>
             </div>
           </Card>
@@ -246,4 +217,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard; 

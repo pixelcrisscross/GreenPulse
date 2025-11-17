@@ -1,17 +1,8 @@
-// src/components/MotorControl.tsx
 import React, { useEffect, useRef, useState } from "react";
-
-/**
- * MotorControl.tsx
- * - Safe polling to /api/state (no overlapping requests)
- * - Robust POST helper for commands (POST /api/power, /api/speed, /api/direction)
- * - Debounced speed slider
- * - Automatic backoff on failures, manual "Retry Now"
- *
- * NOTE:
- * - This component expects your Vite dev server to proxy /api -> ESP IP.
- * - If you call the ESP directly (no proxy), change the paths accordingly.
- */
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Wifi, WifiOff, Loader2, AlertTriangle } from "lucide-react";
 
 type RawStateFromServer = {
   power?: "ON" | "OFF" | boolean | string;
@@ -67,6 +58,7 @@ const MotorControl: React.FC = () => {
 
   // Generic fetch wrapper used for both GET/POST; accepts signal optionally
   async function fetchJson(path: string, options: RequestInit = {}) {
+    // ... (fetchJson logic remains the same)
     const res = await fetch(path, {
       headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
@@ -76,7 +68,6 @@ const MotorControl: React.FC = () => {
       const text = await res.text().catch(() => "");
       throw new Error(`${res.status} ${res.statusText} ${text}`.trim());
     }
-    // Some endpoints might return empty body; try/catch JSON.parse
     try {
       return (await res.json()) as any;
     } catch {
@@ -86,7 +77,7 @@ const MotorControl: React.FC = () => {
 
   // Single poll cycle (no overlapping calls)
   const pollStateOnce = async () => {
-    // cancel any previous poll
+    // ... (pollStateOnce logic remains the same)
     if (pollAbortRef.current) {
       try {
         pollAbortRef.current.abort();
@@ -124,6 +115,7 @@ const MotorControl: React.FC = () => {
 
   // start polling on mount
   useEffect(() => {
+    // ... (useEffect logic remains the same)
     mountedRef.current = true;
     pollStateOnce();
 
@@ -140,6 +132,7 @@ const MotorControl: React.FC = () => {
 
   // POST helper for commands. Returns parsed response if any.
   const postCommand = async (endpoint: string, body?: any) => {
+    // ... (postCommand logic remains the same)
     setLoading(true);
     setError(null);
     try {
@@ -150,7 +143,8 @@ const MotorControl: React.FC = () => {
       setConnected(true);
       setLastSeen(new Date());
       return data;
-    } catch (err: any) {
+    } catch (err: any)
+    {
       console.error("sendCommand error:", err);
       setConnected(false);
       setError(err?.message ? String(err.message) : "ESP32 not reachable");
@@ -162,25 +156,22 @@ const MotorControl: React.FC = () => {
 
   // handlers wired to UI
   const handlePower = (on: boolean) => {
-    // endpoint: POST /api/power with { power: "ON" | "OFF" }
     postCommand("/api/power", { power: on ? "ON" : "OFF" }).catch(() => {});
   };
 
   const toggleDirection = () => {
     const newDir = state.dir === 1 ? -1 : 1;
-    // endpoint: POST /api/direction { direction: "Forward" | "Reverse" }
     postCommand("/api/direction", { direction: newDir === 1 ? "Forward" : "Reverse" }).catch(() => {});
   };
 
-  const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
+  // --- Updated handler for shadcn/ui Slider ---
+  const handleSpeedChange = (val: number) => {
     // optimistic UI update
     setState((prev) => ({ ...prev, speed: val }));
 
     // debounce posting speed to ESP
     if (speedTimerRef.current) window.clearTimeout(speedTimerRef.current);
     speedTimerRef.current = window.setTimeout(() => {
-      // endpoint: POST /api/speed { speed: <number> }
       postCommand("/api/speed", { speed: val }).catch(() => {});
     }, SPEED_DEBOUNCE_MS);
   };
@@ -196,109 +187,134 @@ const MotorControl: React.FC = () => {
   const dirLabel = state.dir === 1 ? "Forward" : "Reverse";
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.heading}>⚙️ ESP32 Motor Controller</h2>
-
-      <div style={styles.statusRow}>
+    // Page container matching Dashboard.tsx's inner wrapper
+    <div className="p-6 md:p-8 space-y-6">
+      {/* Header matching Dashboard.tsx */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <strong>Status: </strong>
-          {connected ? <span style={styles.online}>Connected</span> : <span style={styles.offline}>⚠️ Disconnected</span>}
+          <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            ESP32 Motor Controller
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Direct control over the ESP32 motor pump
+          </p>
+        </div>
+      </div>
+
+      {/* Controller UI wrapped in a Card */}
+      <Card className="p-6 shadow-soft bg-white max-w-2xl">
+        {/* Status Row */}
+        <div className="flex justify-between items-center mb-4 pb-4 border-b">
+          <div className="flex items-center gap-2">
+            <strong className="text-muted-foreground">Status:</strong>
+            {connected ? (
+              <span className="flex items-center gap-1.5 text-secondary font-medium">
+                <Wifi className="h-4 w-4" /> Connected
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-destructive font-medium">
+                <WifiOff className="h-4 w-4" /> Disconnected
+              </span>
+            )}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {lastSeen ? `Last seen: ${lastSeen.toLocaleTimeString()}` : "Never seen"}
+          </div>
         </div>
 
-        <div style={{ marginLeft: "auto", color: "#666", fontSize: 12 }}>
-          {lastSeen ? `Last seen: ${lastSeen.toLocaleTimeString()}` : "Never seen"}
+        {/* Status Readouts */}
+        <div className="p-4 bg-muted rounded-lg space-y-2 mb-6">
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Power:</span>
+            <strong className={`font-semibold ${state.power ? "text-secondary" : "text-destructive"}`}>
+              {powerLabel}
+            </strong>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Direction:</span>
+            <strong className="font-semibold">{dirLabel}</strong>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Speed:</span>
+            <strong className="font-semibold">{state.speed}%</strong>
+          </div>
         </div>
-      </div>
 
-      <div style={styles.statusBox}>
-        <p>
-          Power: <strong style={{ color: state.power ? "#16a34a" : "#dc2626" }}>{powerLabel}</strong>
-        </p>
-        <p>
-          Direction: <strong>{dirLabel}</strong>
-        </p>
-        <p>
-          Speed: <strong>{state.speed}%</strong>
-        </p>
-      </div>
+        {/* Button Group */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+          <Button
+            variant="secondary"
+            className="bg-green-600 hover:bg-green-700 text-white font-bold"
+            onClick={() => handlePower(true)}
+            disabled={!connected || loading}
+            title="Turn motor ON"
+          >
+            Power ON
+          </Button>
+          <Button
+            variant="destructive"
+            className="font-bold"
+            onClick={() => handlePower(false)}
+            disabled={!connected || loading}
+            title="Turn motor OFF"
+          >
+            Power OFF
+          </Button>
+          <Button
+            variant="default"
+            className="font-bold"
+            onClick={toggleDirection}
+            disabled={!connected || loading}
+            title="Toggle direction"
+          >
+            {state.dir === 1 ? "Set Reverse" : "Set Forward"}
+          </Button>
+        </div>
 
-      <div style={styles.buttonGroup}>
-        <button
-          style={{ ...styles.button, background: "#16a34a" }}
-          onClick={() => handlePower(true)}
-          disabled={!connected || loading}
-          title="Turn motor ON"
-        >
-          Power ON
-        </button>
+        {/* Speed Slider */}
+        <div className="space-y-3 mb-6">
+          <label htmlFor="speed" className="font-medium text-muted-foreground">
+            Speed: {state.speed}%
+          </label>
+          <Slider
+            id="speed"
+            min={0}
+            max={100}
+            value={[state.speed]}
+            onValueChange={(value) => handleSpeedChange(value[0])}
+            disabled={!connected || loading}
+          />
+        </div>
 
-        <button
-          style={{ ...styles.button, background: "#dc2626" }}
-          onClick={() => handlePower(false)}
-          disabled={!connected || loading}
-          title="Turn motor OFF"
-        >
-          Power OFF
-        </button>
+        {/* Footer with Retry and Loading */}
+        <div className="flex items-center gap-4 mt-6 pt-4 border-t">
+          <Button onClick={handleRetry} variant="outline" disabled={loading}>
+            Retry Now
+          </Button>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : connected ? (
+              <Wifi className="h-4 w-4 text-secondary" />
+            ) : (
+              <WifiOff className="h-4 w-4 text-destructive" />
+            )}
+            <span>
+              {loading ? "Updating..." : connected ? "Connected" : "Not connected"}
+            </span>
+          </div>
+        </div>
 
-        <button
-          style={{ ...styles.button, background: "#2563eb" }}
-          onClick={toggleDirection}
-          disabled={!connected || loading}
-          title="Toggle direction"
-        >
-          {state.dir === 1 ? "Reverse" : "Forward"}
-        </button>
-      </div>
-
-      <div style={{ marginTop: 20 }}>
-        <label htmlFor="speed">Speed:</label>
-        <input
-          id="speed"
-          type="range"
-          min={0}
-          max={100}
-          value={state.speed}
-          onChange={handleSpeedChange}
-          style={{ width: "100%", marginTop: 8 }}
-          disabled={!connected || loading}
-        />
-      </div>
-
-      <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10 }}>
-        <button onClick={handleRetry} style={styles.smallBtn}>
-          Retry Now
-        </button>
-        <div style={{ color: "#666", fontSize: 12 }}>{loading ? "Updating..." : connected ? "Connected to ESP32" : "Not connected"}</div>
-      </div>
-
-      {error && (
-        <p style={{ color: "#dc2626", marginTop: 10 }}>
-          ⚠️ {error}
-        </p>
-      )}
+        {/* Error Message */}
+        {error && (
+          <div className="mt-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm font-medium flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            {error}
+          </div>
+        )}
+      </Card>
     </div>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    padding: "20px",
-    textAlign: "center",
-    maxWidth: "540px",
-    margin: "40px auto",
-    background: "#f8fafc",
-    borderRadius: "12px",
-    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-  },
-  heading: { marginBottom: "10px" },
-  statusRow: { display: "flex", alignItems: "center", marginBottom: 12 },
-  statusBox: { marginBottom: 16, fontSize: 16 },
-  buttonGroup: { display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" },
-  button: { padding: "10px 18px", fontSize: 16, color: "white", border: "none", borderRadius: 10, cursor: "pointer" },
-  smallBtn: { padding: "6px 10px", borderRadius: 8, border: "1px solid #e5e7eb", cursor: "pointer", background: "#fff" },
-  online: { color: "#065f46", background: "#ecfdf5", padding: "4px 8px", borderRadius: 6 },
-  offline: { color: "#991b1b", background: "#fff1f2", padding: "4px 8px", borderRadius: 6 },
 };
 
 export default MotorControl;

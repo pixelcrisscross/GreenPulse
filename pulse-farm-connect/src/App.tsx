@@ -12,14 +12,14 @@ import Factories from "./pages/Factories";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Navigation from "./components/Navigation";
-import MotorControl from './components/MotorControl' // Import the component
+import MotorControl from './components/MotorControl' 
 
 const queryClient = new QueryClient();
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="flex">
     <Navigation />
-    <div className="ml-64 flex-1">{children}</div>
+    <div className="flex-1 pl-20">{children}</div>
   </div>
 );
 
