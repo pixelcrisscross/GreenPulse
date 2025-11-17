@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Droplets, Wind, Power, Sprout, FileText, Factory } from "lucide-react";
+import { Droplets, Wind, Sun, Power, Sprout, FileText, Factory } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
@@ -9,12 +9,14 @@ const Dashboard = () => {
   const [moisture, setMoisture] = useState(45);
   const [dryness, setDryness] = useState(55);
   const [pumpStatus, setPumpStatus] = useState(false);
+  const [solarIntensity, setSolarIntensity] = useState(73);
 
   // Simulate live sensor updates
   useEffect(() => {
     const interval = setInterval(() => {
       setMoisture(prev => Math.min(95, Math.max(5, prev + (Math.random() * 6 - 3))));
       setDryness(prev => Math.min(95, Math.max(5, prev + (Math.random() * 6 - 3))));
+      setSolarIntensity(prev => Math.min(95, Math.max(5, prev + (Math.random() * 6 - 3))));
     }, 4000);
     return () => clearInterval(interval);
   }, []);
@@ -94,8 +96,8 @@ const Dashboard = () => {
                   {dryness > 60 ? "High dryness level" : "Acceptable range"}
                 </p>
               </div>
-              <div className="h-16 w-16 rounded-full bg-accent/20 flex items-center justify-center">
-                <Wind className="h-8 w-8 text-accent" />
+              <div className="h-16 w-16 rounded-full bg-secondary/20 flex items-center justify-center">
+                <Wind className="h-8 w-8 text-secondary" />
               </div>
             </div>
           </Card>
@@ -120,6 +122,54 @@ const Dashboard = () => {
               >
                 {pumpStatus ? "Turn OFF" : "Turn ON"}
               </Button>
+            </div>
+          </Card>
+
+          <Card className="p-6 shadow-soft hover:shadow-strong transition-shadow bg-white">
+            <div className="flex items-start justify-between">
+              <div className="my-4">
+                <p className="text-xs text-center text-primary-foreground/80 mb-2">System Health</p>
+                <div className="flex justify-center gap-4">
+                  <div 
+                    className={`h-10 w-10 rounded-md border-2 border-white/50 shadow-md transition-colors ${
+                      getMoistureStatus().color === 'text-destructive' ? 'bg-red-500' : 'bg-white/30'
+                    }`} 
+                    title="Critical">
+                  </div>
+                  <div 
+                    className={`h-10 w-10 rounded-md border-2 border-white/50 shadow-md transition-colors ${
+                      getMoistureStatus().color === 'text-accent' ? 'bg-yellow-400' : 'bg-white/30'
+                    }`} 
+                    title="Warning">
+                  </div>
+                  <div 
+                    className={`h-10 w-10 rounded-md border-2 border-white/50 shadow-md transition-colors ${
+                      getMoistureStatus().color === 'text-secondary' ? 'bg-green-500' : 'bg-white/30'
+                    }`} 
+                    title="Optimal">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 shadow-soft hover:shadow-strong transition-shadow bg-white">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                  <Sun className="h-5 w-5 text-primary" />
+                  <span className="text-sm font-medium">Solar Intensity</span>
+                </div>
+                <div className="text-4xl font-bold text-primary mb-2">
+                  {solarIntensity .toFixed(1)}%
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {solarIntensity > 75 ? "High solar intensity" : (solarIntensity < 30 ? "Low solar intensity" : "Acceptable range")}
+                </p>
+              </div>
+              <div className="h-16 w-16 rounded-full bg-accent/20 flex items-center justify-center">
+                <Sun className="h-8 w-8 text-accent" />
+              </div>
             </div>
           </Card>
         </div>
